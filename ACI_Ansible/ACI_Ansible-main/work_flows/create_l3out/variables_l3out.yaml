@@ -1,0 +1,61 @@
+---
+
+# Tenant Name
+tenant: "sean-Energy-Transfer-tenant-test"
+
+#vrf Name
+vrf: "vrf_{{ tenant }}"
+
+#Bridge Domain Name
+bd: "BD_{{ tenant }}"
+
+#Contract Name
+contract: "{{ tenant }}_Con"
+
+#Subject Name
+subject: "ADP_web"
+scope: "context"
+
+#Application Profile Name
+ap: "AP_{{ tenant }}"
+
+#EPG Name
+epg: "EPG_{{ tenant }}"
+
+#L3Out Names  
+l3out1: "SDWAN"
+l3out2: "Fusion"
+
+#Filters
+filterName: "Filter_web"
+filterEntry: "https"
+etherType: "ipv4"
+protocol: "tcp"
+Dest_portstart: "https"
+Dest_portend: "https"
+
+#L3Out Configuration
+Node_profile_Name1: "ACI-BL101_L3_Node"
+Node_profile_Name2: "ACI-BL102_L3_Node"
+RTR_ID1: "10.2.1.11"
+RTR_ID2: "10.2.1.12"
+LIF_profile_Name1: "ACI-BL101_LIFP"
+LIF_profile_Name2: "ACI-BL102_LIFP"
+PRI_IP: "10.2.10.2/31"
+SEC_IP: "10.2.12.2/31"
+BGP_Peer1: "10.10.2.1"
+BGP_Peer2: "10.10.2.3"
+route_control: "export"
+Remote_AS: "65406"
+Route_Map: "SDWAN_Export_Route_Map"
+ENCAP: "3510"
+
+NETWORK_Name: "SD-WAN_Networks"
+Network_IP: "0.0.0.0/0"
+node_id_pri: "101"
+pod_id_pri: "1"
+path_ep_pri: "eth1/1"
+node_id_sec: "102"
+pod_id_sec: "1"
+path_ep_sec: "eth1/1"
+

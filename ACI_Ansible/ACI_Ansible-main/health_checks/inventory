@@ -1,0 +1,7 @@
+
+fab01:
+  hosts:
+    apic1:
+      aci_hostname: 10.122.210.63
+      aci_username: admin
+      aci_password: cisco123

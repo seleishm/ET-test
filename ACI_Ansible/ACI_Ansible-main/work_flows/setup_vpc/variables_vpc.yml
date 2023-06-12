@@ -1,0 +1,44 @@
+---
+
+#Name of Port Channel & Policy Group
+port_channel_name: "system-lacp-active-test"
+policy_group_name: "Leaf101_102"
+
+#First Leaf node:
+
+#Switch Profile & Selector
+leaf_1_profile: "Leaf101_SwProf"
+leaf_1_selector: "Leaf101_SwProf_Sel"
+#Switch Profile Node
+leaf_node_1: "node-101"
+#Switch Profile Node Block
+block_from_1: "101"
+block_to_1: "101"
+#Interface Profile & Selector
+leaf_int_profile_1: "Leaf101_IntProf"
+leaf_int_profile_selector_1: "Eth1_1"
+#Interface Profile port
+access_port_1: "port-1"
+#Interface Profile port block
+port_from_1: "1"
+port_to_1: "1"
+
+
+#Second Leaf node:
+
+# ""
+leaf_2_profile: "Leaf102_SwProf"
+leaf_2_selector: "Leaf102_SwProf_Sel"
+
+leaf_node_2: "node-102"
+
+block_from_2: "102"
+block_to_2: "102"
+
+leaf_int_profile_2: "Leaf102_IntProf"
+leaf_int_profile_selector_2: "Eth1_1"
+
+access_port_2: "port-1"
+
+port_from_2: "1"
+port_to_2: "1"

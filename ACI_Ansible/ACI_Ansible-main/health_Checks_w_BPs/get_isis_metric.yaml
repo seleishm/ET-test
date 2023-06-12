@@ -1,0 +1,39 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get BFD ISIS setting
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/mo/uni/fabric/isisDomP-default.json
+      register: isis_metric
+      tags: global  
+    
+    - name: Compare ISIS metric with Best Practices
+      assert:
+        that: "isis_metric.imdata[0].isisDomPol.attributes.redistribMetric == bp_recommended.isis_metric"
+        success_msg: "ISIS Metric  is configured according to Best Practices"
+        fail_msg: "ISIS Metric is NOT configured according to Best Practices; Fabric value =: {{isis_metric.imdata[0].isisDomPol.attributes.redistribMetric}}; Best Practice value =: {{ bp_recommended.isis_metric }}"
+      ignore_errors: true
+      tags: global
+      
+    - name: Debug
+      debug:
+        msg: "Value: {{ isis_metric.imdata[0].isisDomPol.attributes.redistribMetric }} result {{isis_metric.imdata[0].isisDomPol.attributes.redistribMetric == bp_recommended.isis_metric}}"
+      #when: playbook_debug is defined
+      tags: global

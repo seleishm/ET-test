@@ -1,0 +1,39 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get Data Plane MTU
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/mo/uni/fabric/l2pol-default.json
+      register: dpmtu
+      tags: global
+
+    - name: Compare Data Plane MTU with Best Practices
+      assert:
+        that: "dpmtu.imdata[0].l2InstPol.attributes.fabricMtu | int == bp_recommended.dpmtu"
+        success_msg: "Data Plane MTU is configured according to Best Practices"
+        fail_msg: "Data Plane MTU is NOT configured according to Best Practices; Fabric value =: {{dpmtu.imdata[0].l2InstPol.attributes.fabricMtu}}; Best Practice value =: {{bp_recommended.dpmtu}}"
+      ignore_errors: true
+      tags: global
+
+    - name: Debug
+      debug:
+        msg: "Value: {{dpmtu.imdata[0].l2InstPol.attributes.fabricMtu}} result {{dpmtu.imdata[0].l2InstPol.attributes.fabricMtu | int == bp_recommended.dpmtu}}"
+      #when: playbook_debug is defined
+      tags: global

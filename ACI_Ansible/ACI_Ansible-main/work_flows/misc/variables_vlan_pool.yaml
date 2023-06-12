@@ -1,0 +1,43 @@
+---
+# vlan pool variables
+pool: "ADP_static-vlan700s"
+#state: "present"
+pool_allocation_mode: "static"
+block_name: "700-799"
+block_start: "700"
+block_end: "799"
+
+#domain variables
+domain_name: "ADP_physical-domain"
+domain_type: "phys"
+
+#aep variable   
+aep: "ADP_physical-domain-aaep"
+
+#interface policy variables
+lag_type: "leaf"
+policy_group: "ADP_physical-domain-ipg"
+
+#leaf profile variables
+leaf_profile: "ADP_leaf-1-profile"
+
+
+#leaf selector variables
+leaf: "ADP_leaf-1-selector"
+leaf_node_blk: "node-101"
+from_node: "101"
+to_node: "101"
+
+#leaf interface profile variables
+leaf_interface_profile: "ADP_leaf-1-int-profile"
+
+#access port selector variables  
+access_port_selector: "eth1-3"
+
+#port block variables
+leaf_port_blk: "port-3"
+from_port: "3"
+to_port: "3"
+
+
+

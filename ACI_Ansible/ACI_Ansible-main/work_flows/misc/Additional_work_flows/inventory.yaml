@@ -1,0 +1,14 @@
+---
+all:
+  vars:
+    model_output_dir: "model_output"
+APIC:
+  hosts:
+    ACI-SYD:
+      apic_host: "192.168.0.2"
+      apic_validate_certs: "no"
+      apic_use_proxy: "no"
+      apic_output_level: "normal"
+      ansible_connection: "local"
+      site_code: "SYD"
+...

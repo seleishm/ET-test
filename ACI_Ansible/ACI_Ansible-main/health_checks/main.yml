@@ -1,0 +1,13 @@
+---
+- name: "Get Fabric Version (vetR)"
+  import_playbook: get_version.yaml
+- name: "Get Control Plane MTU"
+  import_playbook: get_control_plane_mtu.yaml
+- name: "Get Data Plane MTU"
+  import_playbook: get_data_plane_mtu.yaml
+- name: "Get Enforce Subnet Check"
+  import_playbook: get_enforce_subnet_check.yaml
+- name: "Get Policy Usage"
+  import_playbook: get_policy_usage.yml
+- name: "Get Policy Overflow TCAM Usage"
+  import_playbook: get_policy_overflow_tcam_usage.yml

@@ -1,0 +1,110 @@
+
+fabric01:
+  hosts:
+    apic1:
+      aci_hostname: 10.122.208.110
+      aci_username: dndzegha
+      aci_password: tRacR8ch
+    apic2:
+      aci_hostname:
+      aci_username:
+      aci_password:
+    apic3:
+      aci_hostname:
+      aci_username:
+      aci_password:
+    apic4:
+      aci_hostname:
+      aci_username:
+      aci_password:
+
+  vars:
+###############################
+# ACI Fabric - Best Practices Validation
+###############################
+    bp_recommended:
+      cpmtu: 9000
+      dpmtu: 9000
+      remote_ep_learn: true
+      remote_ep_learn_set: "yes"
+      enforce_subnet_check: true
+      enforce_subnet_check_set: "yes"
+      port_track: "on"
+      ip_aging: "enabled"
+      ep_loop: "enabled"
+      rogue_ep: "enabled"
+      coop: "strict"
+      ptp: "enabled"
+      bfdisis: "enabled"
+      interface_MCP: "enabled"
+      Global_MCP: "enabled"
+      isis_metric: "40"
+      preserve_qos: "dot1p-preserve"
+      DOM: "Dom"
+      DOM_feature: "telemetry"
+      vrf:
+        enforced: "enforced"
+        enforcement_direction: "ingress"
+        dataplane_learning: "enabled"
+      bd:
+        dataplane_learning: "yes"
+        limit_ip_learn_to_subnet: "yes"
+        
+      polUsagePer: 70
+      apic_version: 5.2(7g)
+
+###############################
+# ACI Fabric - Configuration
+###############################
+    apic_use_proxy: no
+    apic_validate_certs: no
+    ###############################
+    # BANNER
+    ###############################
+    bannaer: "Application Policy Infrastructure Controller - Test Banner"
+    ###############################
+    # SNMP
+    ###############################
+    snmp_ro_string: "public"
+    snmp_contact_string: "name name"
+    snmp_location_string: "address, OH"
+    snmp_trap_destinations1: "1.1.1.1"
+    snmp_trap_destinations2: "2.2.2.2"
+    logging_server_group_name: "sysloggroup_default"
+    logging_server_group_dest1: "3.3.3.3"
+    logging_server_group_dest2: "4.4.4.4"
+    dcbb_vrf_replication_bgp_default_export_community: "64937:57001"
+    dcc_bgp_default_export_community: "64937:54000"
+    dcbb_bgp_default_export_community: "64937:54000"
+    aci_model_data:
+    ###############################
+    # NTP (NTP Servers IPs)
+    ################################
+      ntp:
+      - ntpServerIPAddress: "5.5.5.5"
+      aciVersion22: true
+    ###############################
+    # DNS
+    ###############################
+      dns:
+      - name: "DNS_Server"
+        suffix: lab.test.net
+        IPaddress: 1.1.1.1 # Change
+      - name: "DNS_Server_Preferred"
+        suffix: lab.test.net
+        IPaddress: 2.2.2.2 # Change
+    ###############################
+    # GLOBAL BGP
+    ###############################
+      bgp:
+      - fabricBGPasn: "4201000000"
+      bgpRRnodes:
+      - bgpRRnode: "603"
+      - bgpRRnode: "604"
+    ###############################
+    # DHCP
+    ###############################
+      dhcp:
+      - dhcpServerIPaddress: "1.1.1.1"
+      - dhcpServerIPaddress: "2.2.2.2"
+      - dhcpServerIPaddress: "3.3.3.3"

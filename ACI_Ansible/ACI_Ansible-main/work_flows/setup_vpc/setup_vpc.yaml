@@ -1,0 +1,135 @@
+---
+- name: Setup VPC
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+    ansible_python_interpreter: /usr/bin/python3
+  
+  
+  vars_files:
+    - ./variables_vpc.yml
+  
+  tasks:
+    - name: Create Port Channel Policy
+      ignore_errors: true
+      cisco.aci.aci_interface_policy_port_channel:
+        <<: *aci_login
+        state: present
+        mode: active
+        port_channel: "{{ port_channel_name }}"
+        fast_select: yes
+        graceful_convergence: yes
+        suspend_individual: yes
+
+    - name: Create a Virtual Port Channel (VPC) Interface Policy Group
+      cisco.aci.aci_interface_policy_leaf_policy_group:
+        <<: *aci_login
+        state: present
+        lag_type: node
+        policy_group: "{{ policy_group_name }}"
+        port_channel_policy: "{{ port_channel_name }}"
+
+    - name: Create Leaf Switch Profile
+      cisco.aci.aci_switch_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        leaf_profile: "{{ leaf_1_profile }}"
+
+    - name: Create Leaf Switch Selector
+      cisco.aci.aci_switch_leaf_selector:
+        <<: *aci_login
+        state: present
+        leaf_profile: "{{ leaf_1_profile }}"
+        leaf: "{{ leaf_1_selector }}"
+        leaf_node_blk: "{{ leaf_node_1 }}"
+        from: "{{ block_from_1 }}"
+        to: "{{ block_to_1 }}"
+
+    - name: Create Leaf Interface Profile
+      cisco.aci.aci_interface_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        leaf_interface_profile: "{{ leaf_int_profile_1 }}"
+  
+    # Defines Access Port Selection (eth1/12)
+    - name: Associate Interface Access Port Selector to Leaf Interface Policy
+      cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        access_port_selector: "{{ leaf_int_profile_selector_1 }}"
+        leaf_interface_profile: "{{ leaf_int_profile_1 }}"
+        policy_group: "{{ policy_group_name }}"
+        interface_type: vpc
+
+    - name: Associate an access port block to an interface selector
+      cisco.aci.aci_access_port_block_to_access_port:
+        <<: *aci_login
+        state: present
+        leaf_interface_profile: "{{ leaf_int_profile_1 }}"
+        access_port_selector: "{{ leaf_int_profile_selector_1 }}"
+        leaf_port_blk: "{{ access_port_1 }}"
+        from_port: "{{ port_from_1 }}"
+        to_port: "{{ port_to_1 }}"
+
+    - name: Bind interface profiles to leaf profiles
+      cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        interface_selector: "{{ leaf_int_profile_1 }}"
+        leaf_profile: "{{ leaf_1_profile }}"
+
+    - name: Create Leaf Switch Profile
+      cisco.aci.aci_switch_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        leaf_profile: "{{ leaf_2_profile }}"
+
+    - name: Create Leaf Switch Selector
+      cisco.aci.aci_switch_leaf_selector:
+        <<: *aci_login
+        state: present
+        leaf_profile: "{{ leaf_2_profile }}"
+        leaf: "{{ leaf_2_selector }}"
+        leaf_node_blk: "{{ leaf_node_2 }}"
+        from: "{{ block_from_2 }}"
+        to: "{{ block_to_2 }}"
+
+    - name: Create Leaf Interface Profile
+      cisco.aci.aci_interface_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        leaf_interface_profile: "{{ leaf_int_profile_2 }}"
+  
+    # Defines Access Port Selection (eth1/12)
+    - name: Associate Interface Access Port Selector to Leaf Interface Policy
+      cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        access_port_selector: "{{ leaf_int_profile_selector_2 }}"
+        leaf_interface_profile: "{{ leaf_int_profile_2 }}"
+        policy_group: "{{ policy_group_name }}"
+        interface_type: vpc
+
+    - name: Associate an access port block to an interface selector
+      cisco.aci.aci_access_port_block_to_access_port:
+        <<: *aci_login
+        state: present
+        leaf_interface_profile: "{{ leaf_int_profile_2 }}"
+        access_port_selector: "{{ leaf_int_profile_selector_2 }}"
+        leaf_port_blk: "{{ access_port_2 }}"
+        from_port: "{{ port_from_2 }}"
+        to_port: "{{ port_to_2 }}"
+
+    - name: Bind interface profiles to leaf profiles
+      cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
+        <<: *aci_login
+        state: present
+        interface_selector: "{{ leaf_int_profile_2 }}"
+        leaf_profile: "{{ leaf_2_profile }}"

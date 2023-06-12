@@ -1,0 +1,41 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get Rogue EP control
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/mo/uni/infra.json?query-target=children&target-subtree-class=epControlP
+      register: rogue_ep
+     # when: aci_version | int == 4
+      tags: global
+
+    - name: Compare Rogue EP control protection with Best Practices
+      assert:
+        that: "rogue_ep.imdata[0].epControlP.attributes.adminSt == bp_recommended.rogue_ep"
+        success_msg: "Rogue EP control is configured according to Best Practices"
+        fail_msg: "Rogue EP control is NOT configured according to Best Practices; currently set to: {{ rogue_ep.imdata[0].epControlP.attributes.adminSt }}"
+      ignore_errors: true
+     # when: aci_version| int == 4
+      tags: global
+
+    - name: Debug
+      debug:
+        msg: "Value: {{rogue_ep.imdata[0].epControlP.attributes.adminSt }} result {{rogue_ep.imdata[0].epControlP.attributes.adminSt == bp_recommended.rogue_ep}}"
+     # when: playbook_debug is defined and aci_version | int == 4
+      tags: global

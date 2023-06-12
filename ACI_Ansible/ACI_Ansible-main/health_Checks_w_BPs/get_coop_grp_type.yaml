@@ -1,0 +1,39 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get Coop Group Type
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/mo/uni/fabric/pol-default.json
+      register: coop
+      tags: global
+
+    - name: Compare Coop Group Type with Best Practices
+      assert:
+        that: "coop.imdata[0].coopPol.attributes.type == bp_recommended.coop"
+        success_msg: "Coop Group Type is configured according to Best Practices"
+        fail_msg: "Coop Group Type is NOT configured according to Best Practices, currently set to: {{ coop.imdata[0].coopPol.attributes.type }}"
+      ignore_errors: true
+      tags: global
+
+    - name: Debug
+      debug:
+        msg: "Value: {{coop.imdata[0].coopPol.attributes.type }} result {{coop.imdata[0].coopPol.attributes.type == bp_recommended.coop}}"
+      #when: playbook_debug is defined
+      tags: global

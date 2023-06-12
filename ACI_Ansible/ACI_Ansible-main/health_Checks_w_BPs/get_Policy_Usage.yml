@@ -1,0 +1,36 @@
+
+---
+
+- name: Configure APIC Health Check
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      hostname: '{{ aci_hostname }}'
+      username: '{{ aci_username }}'
+      password: '{{ aci_password }}'
+      validate_certs: no
+
+  tasks:     
+    - name: Get Policy Usage
+      aci_rest:
+        <<: *aci_login
+        path: /api/node/class/eqptcapacityPolUsage1d.json?&order-by=eqptcapacityPolUsage1d.modTs|desc
+      register: usage
+      delegate_to: localhost
+      
+      
+      
+    - name: Compare Policy Usage with Best Practices
+      
+      assert:
+        quiet: yes
+        that: "(item.eqptcapacityPolUsage1d.attributes.polUsagePer | int) <= bp_recommended.polUsagePer"
+        success_msg: "S"
+        fail_msg: "\n Policy usage for {{item.eqptcapacityPolUsage1d.attributes.dn}} is at {{item.eqptcapacityPolUsage1d.attributes.polUsagePer}}%, you probably need to slow down bringing up more EPGs (meaning doing VMM or static bindings) on those leaves that have that 70% utilization or more (the number is subjective, but I would start watching very close)."
+      loop: "{{usage.imdata | list}}"
+      loop_control:
+        label: "{{ item.eqptcapacityPolUsage1d.attributes.dn}}"
+      ignore_errors: true
+    

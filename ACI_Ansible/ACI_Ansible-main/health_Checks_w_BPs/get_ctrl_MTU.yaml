@@ -1,0 +1,39 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get Control Plane MTU
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/mo/uni/infra/CPMtu.json
+      register: cpmtu
+      tags: global
+
+    - name: Compare Control Plane MTU with Best Practices
+      assert:
+        that: "cpmtu.imdata[0].infraCPMtuPol.attributes.CPMtu | int == bp_recommended.cpmtu"
+        success_msg: "Control Plane MTU is configured according to Best Practices"
+        fail_msg: "Control Plane MTU is NOT configured according to Best Practices; Fabric value =: {{cpmtu.imdata[0].infraCPMtuPol.attributes.CPMtu}}; Best Practice value =: {{ bp_recommended.cpmtu }}"
+      ignore_errors: true
+      tags: global
+
+    - name: Debug
+      debug:
+        msg: "Value: {{cpmtu.imdata[0].infraCPMtuPol.attributes.CPMtu}} result {{cpmtu.imdata[0].infraCPMtuPol.attributes.CPMtu | int == bp_recommended.cpmtu}}"
+      #when: playbook_debug is defined
+      tags: global

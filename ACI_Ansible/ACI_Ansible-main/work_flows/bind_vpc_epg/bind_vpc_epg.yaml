@@ -1,0 +1,36 @@
+---
+
+# ansible-playbook bind_vpc_epg.yaml (Bind static paths to EPGs)
+#The assumption is that the Endpoint Group (EPG), Bridge Domain (BD), and VRF have been created
+- name: PLAYBOOK -- Static EPG mapping to interface
+  hosts: "*apic1"
+  connection: local
+  gather_facts: False
+  vars:
+    login_info: &login_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: False
+
+      
+  vars_files:
+    - ./variables_epg_bind.yaml
+
+
+  tasks:
+    - name: Deploy Static Path binding for given EPG
+      cisco.aci.aci_static_binding_to_epg:
+        <<: *login_info
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.ap }}"
+        epg: "{{ item.epg }}"
+        encap_id: "{{ item.vlan }}"
+        deploy_immediacy: lazy
+        interface: "{{ item.intf }}"
+        leafs: "{{ item.leaf }}"
+        interface_mode: "{{ item.mode }}"
+        interface_type: "{{ item.type }}"
+        pod_id: 1
+        state: present
+      with_items: "{{ bindings }}"

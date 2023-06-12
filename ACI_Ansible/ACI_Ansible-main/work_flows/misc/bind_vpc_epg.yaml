@@ -1,0 +1,30 @@
+---
+
+# ansible-playbook bind_vpc_epg.yaml -e 'host=dcloud'
+- name: PLAYBOOK -- Static EPG mapping to interface
+  hosts: "{{ host | default('sandbox') }}"
+  connection: local
+  gather_facts: False
+  vars:
+    login_info: &login_info
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      validate_certs: False
+
+  tasks:
+    - name: Deploy Static Path binding for given EPG
+      cisco.aci.aci_static_binding_to_epg:
+        <<: *login_info
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.ap }}"
+        epg: "{{ item.epg }}"
+        encap_id: "{{ item.vlan }}"
+        deploy_immediacy: lazy
+        interface: "{{ item.intf }}"
+        leafs: "{{ item.leaf }}"
+        interface_mode: tagged
+        interface_type: "{{ item.type }}"
+        pod_id: 1
+        state: present
+      with_items: "{{ bindings }}"

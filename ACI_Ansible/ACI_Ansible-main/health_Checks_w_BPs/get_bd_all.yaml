@@ -1,0 +1,39 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Get All BD info from ACI
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/class/fvBD.json
+      register: bds
+      tags: bd
+
+    - name: Compare BD settings with Best Practices
+     
+      assert:
+        quiet: yes
+        that: "item.fvBD.attributes.ipLearning == bp_recommended.bd.dataplane_learning and item.fvBD.attributes.limitIpLearnToSubnets == bp_recommended.bd.limit_ip_learn_to_subnet"
+        success_msg: "S"
+        fail_msg: "{{item.fvBD.attributes.name}} BD is NOT configured according to Best Practices; current setting are;  Data Plane IP Learning: {{ item.fvBD.attributes.ipLearning }} AND Limit IP Learning to Subnet: {{ item.fvBD.attributes.limitIpLearnToSubnets }}"
+      
+      loop: "{{bds.imdata}}"
+      loop_control:
+        label: "{{ item.fvBD.attributes.name }}"
+      ignore_errors: true
+      tags: bd

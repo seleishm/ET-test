@@ -1,0 +1,88 @@
+# ansible-playbook add_leaf_switch_pair.yml -e "pattern_vars=add_leaf_switch_pair_xxxx.yml"
+---
+- name: Import 'Add Leaf Switch Pair' pattern variables
+  hosts: APIC
+  gather_facts: no
+  tasks:
+    - name: Import variables from file
+      include_vars:
+        file: "{{ pattern_vars }}"
+
+    - name: End play for other fabrics
+      meta: end_host
+      when: fabric_name != inventory_hostname
+
+    - name: Pre-execution checks
+      assert:
+        that:
+          - fabric_name is defined
+          - pattern_common_vars is defined
+          - inventory.leaf is defined
+        fail_msg: "Please ensure that all required variables have been defined in {{ pattern_vars }}"
+        quiet: true
+
+    - name: Import common variables from file
+      include_vars:
+        file: "{{ pattern_common_vars }}"
+
+- name: Deploy 'Add Leaf Switch Pair' pattern to APIC(s)
+  hosts: APIC
+  gather_facts: no
+  vars:
+    model_key: "{{ inventory_hostname }}"
+    template_name: "add_leaf_switch_pair.j2.yml"
+    template_data: "{{ lookup('template', '{{ template_name }}') | from_yaml }}"
+    aci_model_data: "{{ template_data[model_key]|default([]) }}"
+
+  tasks:
+    - name: End play for other fabrics
+      meta: end_host
+      when: fabric_name != inventory_hostname
+
+    - name: Print ACI model data
+      debug:
+        var: aci_model_data
+      when: aci_model_data != []
+
+    - name: Ensure model output directory exists (optional)
+      delegate_to: localhost
+      file:
+        path: "{{ model_output_dir }}"
+        state: directory
+      when:
+        - model_output_dir is defined
+        - aci_model_data != []
+
+    - name: Generate model file (optional)
+      delegate_to: localhost
+      template:
+        src: "{{ template_name }}"
+        dest: "{{ model_output_dir }}/aci-model-{{ inventory_hostname }}-{{ pattern_vars }}"
+      when:
+        - model_output_dir is defined
+        - aci_model_data != []
+
+    - name: Deploy ACI Fabric Inventory policies
+      when: aci_model_data.inventory is defined
+      include_role:
+        name: aci-model
+        tasks_from: inventory
+
+    - name: Deploy ACI 'mgmt' Tenant policies
+      when: aci_model_data.mgmt is defined
+      include_role:
+        name: aci-model
+        tasks_from: mgmt_tenant
+
+    - name: Deploy ACI Fabric policies
+      when: aci_model_data.fabric is defined
+      include_role:
+        name: aci-model
+        tasks_from: fabric
+
+    - name: Deploy ACI Access policies
+      when: aci_model_data.access is defined
+      include_role:
+        name: aci-model
+        tasks_from: access
+...

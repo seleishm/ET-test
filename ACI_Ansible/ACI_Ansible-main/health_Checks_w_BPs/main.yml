@@ -1,0 +1,74 @@
+---
+
+- name: Get Fabric Version
+  import_playbook: get_apic_version.yaml
+  
+- name: Get Control Plane MTU
+  import_playbook: get_ctrl_MTU.yaml
+  
+- name: Get Data Plane MTU
+  import_playbook: get_data_plane_MTU.yaml
+  
+- name: Get Disable Remote EP Learn 
+  import_playbook: get_disable_remote_ep_learn.yaml
+  
+- name: Get Enforce Subnet Check 
+  import_playbook: get_enforce_subnet_check.yaml
+  
+- name: Get Port tracking 
+  import_playbook: get_port_tracking.yaml
+  
+- name: Get IP Aging
+  import_playbook: get_ip_aging.yaml
+  
+- name: Get EP Loop protection 
+  import_playbook: get_ep_loop_protection.yaml
+  
+- name: Get Rogue EP Control 
+  import_playbook: get_rogue_ep_control.yaml
+  
+- name: Get Coop Group Type 
+  import_playbook: get_coop_grp_type.yaml
+  
+- name: Get PTP
+  import_playbook: get_ptp.yaml
+  
+- name: Get All VRF info. From Fabric validate against BP
+  import_playbook: get_vrf_all.yaml
+  
+- name: Get All BD info from Fabric validate against BP
+  import_playbook: get_bd_all.yaml
+  
+# - name: Get Faults
+  # import_playbook: 
+  
+# - name: Get Encrypted backup 
+  # import_playbook: 
+  
+- name: Get MCP interface
+  import_playbook: get_interface_MCP_loop.yaml
+  
+- name: Get MCP Global
+  import_playbook: get_Global_MCP.yaml
+  
+- name: Get DOM Digital Optical Monitoring enabled/disabled
+  import_playbook: get_DOM.yaml
+  
+- name: Get DOM feature setting
+  import_playbook: get_DOM_feature.yaml
+  
+- name: Get BFD on Internal Fabric Interfaces 
+  import_playbook: get_bfdisis.yaml
+  
+- name: Reduce ISIS Metric
+  import_playbook: get_isis_metric.yaml
+  
+- name: Perserve QoS Dot1q
+  import_playbook: get_qos_preserved.yaml
+  
+- name: Get Policy Usage
+  import_playbook: get_Policy_Usage.yml
+  
+- name: Get Policy Overflow TCAM Usage
+  import_playbook: get_policy_overflow_tcam_usage.yml
+  

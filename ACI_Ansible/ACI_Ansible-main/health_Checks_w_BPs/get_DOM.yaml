@@ -1,0 +1,40 @@
+---
+
+- name: Checking ACI Fabric Best Practices
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      state: present
+   # ansible_python_interpreter: /usr/bin/python3
+   
+  tasks:
+    - name: Get DOM setting
+      aci_rest:
+        host: "{{ aci_hostname }}"
+        username: "{{ aci_username }}"
+        password: "{{ aci_password }}"
+        validate_certs: no
+        path: /api/node/class/fabricNodeControl.json
+      register: DOM        
+      tags: global  
+    
+    - name: Compare DOM setting with Best Practices
+      assert:
+        that: "DOM.imdata[0].fabricNodeControl.attributes.control == bp_recommended.DOM "
+        success_msg: "DOM setting is configured according to Best Practices"
+        fail_msg: "DOM setting is NOT configured according to Best Practices; DOM configuration =: {{ DOM.imdata[0].fabricNodeControl.attributes.control }} Best Practice =:  {{ bp_recommended.DOM }}"
+      #when: playbook_debug is defined }}"
+      ignore_errors: true
+      tags: global
+      
+    - name: Debug
+      debug:
+        msg: "Value: {{ DOM.imdata[0].fabricNodeControl.attributes.control }} result {{DOM.imdata[0].fabricNodeControl.attributes.control == bp_recommended.DOM }}"
+      #when: playbook_debug is defined
+      tags: global

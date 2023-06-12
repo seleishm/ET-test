@@ -1,0 +1,9 @@
+To run "bind_vpc_epg.yaml playbook:
+
+$ansible-playbook -i inventory_Autopods bind_vpc_epg_vars.yaml
+
+the variabes file is located in the /variables directory and referenced in the playbook via:
+
+vars_files:
+    - ~/ADP/GVE_DevNet_ACI-Ansible-Dashboard/variables/variables_epg_bind.yaml
+

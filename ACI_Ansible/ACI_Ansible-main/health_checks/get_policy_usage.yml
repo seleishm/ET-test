@@ -1,0 +1,23 @@
+---
+
+- name: Configure APIC Health Check
+  hosts: '*apic1'
+  connection: local
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      hostname: '{{ aci_hostname }}'
+      username: '{{ aci_username }}'
+      password: '{{ aci_password }}'
+      validate_certs: no
+
+  tasks:     
+    - name: Get Policy Usage
+      aci_rest:
+        <<: *aci_login
+        path: /api/node/class/eqptcapacityPolUsage1d.json?&order-by=eqptcapacityPolUsage1d.modTs|desc
+      register: usage
+      delegate_to: localhost
+
+    - debug:
+        var: usage.imdata

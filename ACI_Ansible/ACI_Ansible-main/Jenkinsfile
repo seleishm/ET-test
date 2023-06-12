@@ -1,0 +1,81 @@
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('build') {
+
+
+            steps {
+                sh '''
+						dir
+						ansible --version
+						ansible-galaxy collection install -r requirements.yml
+                   '''
+            }
+        }
+		
+		stage('Health Checks w/ BP(s)') {
+
+
+            steps {
+                sh '''
+						ansible-playbook -i inventory_BP_AutoPods health_Checks_w_BPs/main.yml
+                   '''
+            }
+        }
+
+        stage('Git Bundle') {
+
+
+            steps {
+                sh '''
+                        git bundle create ACI-Ansible.bundle --all
+                        ls
+                   '''
+            }
+        }
+
+        stage('Git Archive') {
+
+
+            steps {
+                sh '''
+                        git archive --prefix=aci-ansible/ --output=./ACI-Ansible-archive.zip --format=zip HEAD
+                        ls
+                   '''
+            }
+        }
+
+        stage('tar/zip') {
+
+
+            steps {
+                sh '''
+                        zip -r ACI-Ansible.zip ./health_Checks_w_BPs ./work_flows ./Dockerfile ./README
+                        ls
+                   '''
+            }
+        }
+      
+        
+            stage('Deploy') {
+
+                when { branch "main" }
+                steps {
+                    sh '''
+                            ls
+                            curl -H 'X-JFrog-Art-Api:AKCp8mZmtuJz1BtCnLyym1L98ym47LVrcPXwj3CoEcKBF99WvTzu7nbm63AzqiwaLQftmNivg' -T ACI-Ansible.bundle "https://engci-maven.cisco.com/artifactory/ACI-Ansible-cdn/ACI-Ansible/ACI-Ansible.bundle"
+                            curl -H 'X-JFrog-Art-Api:AKCp8mZmtuJz1BtCnLyym1L98ym47LVrcPXwj3CoEcKBF99WvTzu7nbm63AzqiwaLQftmNivg' -T ACI-Ansible-archive.zip "https://engci-maven.cisco.com/artifactory/ACI-Ansible-cdn/ACI-Ansible/ACI-Ansible-archive.zip"
+                            curl -H 'X-JFrog-Art-Api:AKCp8mZmtuJz1BtCnLyym1L98ym47LVrcPXwj3CoEcKBF99WvTzu7nbm63AzqiwaLQftmNivg' -T ACI-Ansible.zip "https://engci-maven.cisco.com/artifactory/ACI-Ansible-cdn/ACI-Ansible/ACI-Ansible.zip"
+                       '''
+                }
+            }
+
+        
+        
+		
+
+    }
+}

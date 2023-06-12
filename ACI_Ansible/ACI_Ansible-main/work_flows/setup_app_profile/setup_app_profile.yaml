@@ -1,0 +1,164 @@
+---
+
+# ansible-playbook setup_app_profile.yaml -e 'host=dcloud'
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: "*apic1"
+  connection: local
+  gather_facts: False
+  vars:
+    login_info: &login_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: False
+      
+  vars_files:
+    - ./variables_app_profile.yaml
+
+  tasks:
+    - name: TASK 01 - ENSURE APPLICATIONS TENANT EXISTS
+      cisco.aci.aci_tenant:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        descr: "Tenant Created Using Ansible"
+      tags: tenant, vrf, bd, filter, contract, app, epg
+   
+    - name: TASK 02 - ENSURE TENANT VRF EXISTS
+      cisco.aci.aci_vrf:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        vrf: "{{ vrf }}"
+        descr: "VRF Created Using Ansible"
+      tags: vrf, bd
+      
+    - name: TASK 03 - ENSURE TENANT BRIDGE DOMAINS AND EXIST
+      cisco.aci.aci_bd:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        #bd: "{{ item.bd }}"
+        bd: "{{ item.bd }}"
+        vrf: "{{ vrf }}"
+      with_items: "{{ bridge_domains }}"
+      tags: bd
+      
+    - name: TASK 04 - ENSURE BRIDGE DOMAINS HAVE SUBNETS
+      cisco.aci.aci_bd_subnet:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        bd: "{{ item.bd }}"
+        gateway: "{{ item.gateway }}"
+        mask: "{{ item.mask }}"
+        scope: "{{ item.scope }}"
+      with_items: "{{ bridge_domains }}"
+      
+    - name: TASK 05 - ENSURE TENANT FILTERS EXIST
+      cisco.aci.aci_filter:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        filter: "{{ item.filter }}"
+        descr: "Filter Created Using Ansible"
+      with_items: "{{ filters }}"
+      tags: filter, contract
+      
+    - name: TASK 06 - ENSURE FILTERS HAVE FILTER ENTRIES
+      cisco.aci.aci_filter_entry:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        filter: "{{ item.filter }}"
+        entry: "{{ item.entry }}"
+        ether_type: "ip"
+        ip_protocol: "{{ item.protocol }}"
+        dst_port_start: "{{ item.port }}"
+        dst_port_end: "{{ item.port }}"
+      with_items: "{{ filters }}"
+      tags: filter, contract
+
+    - name: TASK 07 - ENSURE TENANT CONTRACTS EXIST
+      cisco.aci.aci_contract:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ item.contract }}"
+        scope: "context"
+        description: "Contract Created Using Ansible"
+      with_items: "{{ contracts }}"
+      tags: contract
+
+
+    - name: TASK 08 - ENSURE CONTRACTS HAVE CONTRACT SUBJECTS
+      cisco.aci.aci_contract_subject:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.subject }}"
+      with_items: "{{ contracts }}"
+      tags: contract
+
+    - name: TASK 09 - ENSURE CONTRACT SUBJECTS HAVE FILTERS
+      cisco.aci.aci_contract_subject_to_filter:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.subject }}"
+        filter: "{{ item.filter }}"
+      with_items: "{{ contracts }}"
+      tags: contract]
+      
+    - name: TASK 10 - ENSURE APPLICATION EXISTS
+      cisco.aci.aci_ap:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        descr: "App Profile Created Using Ansible"
+      tags: app, epg
+  
+  
+    - name: TASK 11 - ENSURE APPLICATION EPGS EXISTS
+      cisco.aci.aci_epg:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        bd: "{{ item.bd }}"
+        descr: "EPG Created Using Ansible"
+      with_items: "{{ epgs }}"
+      tags: epg
+      
+      
+    - name: TASK 12 - ENSURE DOMAIN IS BOUND TO EPG
+      cisco.aci.aci_epg_to_domain:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        domain: "cisco.aci.aci_ansible_lab"
+        domain_type: "vmm"
+        vm_provider: "vmware"
+        encap_mode: "auto"
+        encap: "{{ item.encap }}"
+      with_items: "{{ epgs }}"
+      tags: epg
+      
+    - name: TASK 13 - ENSURE EPGS HAVE CONTRACTS
+      cisco.aci.aci_epg_to_contract:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        contract: "{{ item.contract }}"
+        contract_type: "{{ item.contract_type }}"
+      with_items: "{{ epg_contracts }}"
+      tags: epg
+

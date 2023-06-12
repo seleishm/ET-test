@@ -1,0 +1,20 @@
+---
+bindings:
+  - tenant: "Ansible_pete1"
+    ap: "pete1_ap"
+    epg: "db"
+    vlan: "700"
+    intf: "1/3"
+#    type: "vpc"  or port-channel or fex or switch_port (default) or fex_port_channel or fex_vpc  
+    type: "switch_port"
+#    leaf: "101-102"  
+    leaf: "101"
+#    mode: "tagged" or access, untagged OR regular, tagged, trunk (default) OR 802.1p, native
+    mode: "access" 
+#  - tenant: "Ansible_pete1"
+#    ap: "pete1_ap"
+#    epg: "web"
+#    vlan: 7021"
+#    intf: "3"
+#    type: "vpc"
+#    leaf: "101-102"

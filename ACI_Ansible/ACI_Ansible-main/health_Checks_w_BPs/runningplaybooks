@@ -1,0 +1,7 @@
+Running playbooks:
+ansible-playbook -i demo_aci_bp_inventory.yml get_ptp.yaml
+
+The inventory file has the host AND the variables.
+
+Could have separated the variables in a separate variables.yaml file if we want.
+

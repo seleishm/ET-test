@@ -1,0 +1,210 @@
+---
+
+# The goal, from a network engineer perspective:
+#  - Define a list of Tenant and assign it 
+#  - Assumption: 
+#
+# In ACI, that requires the following steps:
+#  - Define a Tenant for L3Out
+#  - Define External EPG for L3Out network
+#  - Define Logical Interface Profile for L3Out network
+#  - Define routed interface to L3Out network
+# ansible-playbook -i inventory create_l3out/create_l3out.yaml
+
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: "*apic1"
+  connection: local
+  gather_facts: False
+  vars:
+    login_info: &login_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: no
+      
+  vars_files:
+    - ./variables_l3out.yaml
+
+  tasks:
+    - name: Add Tenant "{{ tenant }}"
+      cisco.aci.aci_tenant:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+ 
+
+    - name: Add VRF "{{ vrf }}" 
+      cisco.aci.aci_vrf:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        vrf: "{{ vrf }}"
+
+    - name: ENSURE TENANT FILTERS EXIST
+      cisco.aci.aci_filter:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        filter: "{{ filterName }}"
+        descr: "Filter Created Using Ansible"
+      with_items: "{{ filterName }}"
+
+
+    - name: Add New Filter Entry "{{ filterEntry }}"
+      cisco.aci.aci_filter_entry:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        filter: "{{ filterName }}"
+        entry: "{{ filterEntry }}"
+        ether_type: "{{ etherType }}"
+        ip_protocol: "{{ protocol }}"
+        dst_port_start: "{{ Dest_portstart }}"
+        dst_port_end: "{{ Dest_portend }}"
+      with_items: "{{ filterEntry }}"
+
+    - name: ENSURE TENANT CONTRACTS EXIST
+      cisco.aci.aci_contract:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ contract }}"
+        scope: "{{ scope }}"
+        description: "Contract Created Using Ansible"
+      with_items: "{{ contract }}"
+
+    - name: ENSURE CONTRACTS HAVE CONTRACT SUBJECTS
+      cisco.aci.aci_contract_subject:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ contract }}"
+        subject: "{{ subject }}"
+      with_items: "{{ contract }}"
+
+    - name: Add CONTRACT with FILTERS "{{ filterName }}"
+      cisco.aci.aci_contract_subject_to_filter:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        contract: "{{ contract }}"
+        subject: "{{ subject }}"
+        filter: "{{ filterName }}"
+      with_items: "{{ contract }}"
+
+    - name: ENSURE APPLICATION EXISTS
+      cisco.aci.aci_ap:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        description: "App Profile Created Using Ansible"
+
+    - name: ENSURE TENANT BRIDGE DOMAINS EXIST
+      cisco.aci.aci_bd:
+        <<: *login_info
+        state: "present"
+        tenant: "{{ tenant }}"
+        bd: "{{ bd }}"
+        vrf: "{{ vrf }}"
+
+
+    - name: Add a new L3out "{{ l3out1 }}"
+      cisco.aci.aci_l3out:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        vrf: "{{ vrf }}"
+        domain: "{{ bd }}"
+        l3protocol: "bgp"
+        route_control: "{{ route_control }}"
+        state: "present"
+
+
+    - name: Add external EPG "{{ l3out1 }}_extepg" to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_extepg:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        name: "{{ l3out1 }}_extepg"
+        state: "present"
+  
+
+    - name: Add node profile "{{ Node_profile_Name1 }}" to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_logical_node_profile:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name1 }}"
+        dscp: "CS0"
+        state: "present"
+
+    - name: Add interface profile "{{ LIF_profile_Name1 }}" to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_logical_interface_profile:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name1 }}"
+        interface_profile: "{{ LIF_profile_Name1 }}"
+        state: "present"
+
+    
+    - name: Add routed interface to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_interface:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name1 }}"
+        interface_profile: "{{ LIF_profile_Name1 }}"
+        pod_id: "{{ pod_id_pri }}"
+        node_id: "{{ node_id_pri }}"
+        path_ep: "{{ path_ep_pri }}"
+        interface_type: "l3-port"
+        state: "present"
+
+    - name: Add node profile "{{ Node_profile_Name2 }}" to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_logical_node_profile:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name2 }}"
+        dscp: "CS0"
+        state: "present"
+
+
+    - name: Add interface profile "{{ LIF_profile_Name2 }}" to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_logical_interface_profile:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name2 }}"
+        interface_profile: "{{ LIF_profile_Name2 }}"
+        state: "present"
+
+
+    - name: Add routed secondary interface to L3Out "{{ l3out1 }}"
+      cisco.aci.aci_l3out_interface:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        node_profile: "{{ Node_profile_Name2 }}"
+        interface_profile: "{{ LIF_profile_Name2 }}"
+        pod_id: "{{ pod_id_sec }}"
+        node_id: "{{ node_id_sec }}"
+        path_ep: "{{ path_ep_sec }}"
+        interface_type: "l3-port"
+        state: "present"
+
+
+
+    - name: Add external subnet
+      cisco.aci.aci_l3out_extsubnet:
+        <<: *login_info
+        tenant: "{{ tenant }}"
+        l3out: "{{ l3out1 }}"
+        extepg: "{{ l3out1 }}_extepg"
+        network: "{{ PRI_IP }}"
+        scope: "export-rtctrl"
+        state: "present"
+
+

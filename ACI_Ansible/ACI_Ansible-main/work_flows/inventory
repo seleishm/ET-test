@@ -1,0 +1,19 @@
+
+fabric01:
+  hosts:
+    apic1:
+      aci_hostname: 10.122.208.110
+      aci_username: dndzegha
+      aci_password: tRacR8ch
+    apic2:
+      aci_hostname:
+      aci_username:
+      aci_password:
+    apic3:
+      aci_hostname:
+      aci_username:
+      aci_password:
+    apic4:
+      aci_hostname:
+      aci_username:
+      aci_password:

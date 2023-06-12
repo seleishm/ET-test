@@ -1,0 +1,65 @@
+# ansible-playbook create_access_template.yml -e "pattern_vars=create_access_template_xxxx.yml"
+---
+- name: Import 'Create Active/Standby/Single NIC Access Template' pattern variables
+  hosts: APIC
+  gather_facts: no
+  tasks:
+    - name: Import variables from file
+      include_vars:
+        file: "{{ pattern_vars }}"
+
+    - name: End play for other fabrics
+      meta: end_host
+      when: fabric_name != inventory_hostname
+
+    - name: Pre-execution checks
+      assert:
+        that:
+          - fabric_name is defined
+          - access_interface_policy_group[0].name is defined
+        fail_msg: "Please ensure that all required variables have been defined in {{ pattern_vars }}"
+        quiet: true
+
+- name: Deploy 'Create Active/Standby/Single NIC Access Template' pattern on APIC(s)
+  hosts: APIC
+  gather_facts: no
+  vars:
+    model_key: "{{ inventory_hostname }}"
+    template_name: "create_access_template.j2.yml"
+    template_data: "{{ lookup('template', '{{ template_name }}') | from_yaml }}"
+    aci_model_data: "{{ template_data[model_key]|default([]) }}"
+
+  tasks:
+    - name: End play for other fabrics
+      meta: end_host
+      when: fabric_name != inventory_hostname
+
+    - name: Print ACI model data
+      debug:
+        var: aci_model_data
+      when: aci_model_data != []
+
+    - name: Ensure model output directory exists (optional)
+      delegate_to: localhost
+      file:
+        path: "{{ model_output_dir }}"
+        state: directory
+      when:
+        - model_output_dir is defined
+        - aci_model_data != []
+
+    - name: Generate model file (optional)
+      delegate_to: localhost
+      template:
+        src: "{{ template_name }}"
+        dest: "{{ model_output_dir }}/aci-model-{{ inventory_hostname }}-{{ pattern_vars }}"
+      when:
+        - model_output_dir is defined
+        - aci_model_data != []
+
+    - name: Deploy ACI Access policies
+      when: aci_model_data.access is defined
+      include_role:
+        name: aci-model
+        tasks_from: access
+...

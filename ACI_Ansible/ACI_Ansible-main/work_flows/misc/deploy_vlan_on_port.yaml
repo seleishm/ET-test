@@ -1,0 +1,132 @@
+---
+# The goal, from a network engineer perspective:
+#  - Define a list of VLANs and assign it to a port
+#  - Assumption: port is a single port (not VPC)
+#
+# In ACI, that requires the following steps:
+#  - Define a list of VLANs
+#  - Associate those VLANs with a "Physical Domain"
+#  - Define an Associated Attachable Entity Profile (AEP)
+#  - Build an interface group policy that leverages the AAEP
+#  - Define the leaf and port to be assigned
+
+# ansible-playbook deploy_vlan_on_port.yaml -e 'host=dcloud'
+- name: Assign a list of VLANs to a port
+  hosts: "{{ host | default('sandbox') }}"
+  connection: local
+  gather_facts: False
+  vars:
+    login_info: &login_info
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      validate_certs: False
+
+  tasks:
+    # Create the list of VLANs
+    - name: Create a VLAN Pool named "Static-VLAN100s"
+      cisco.aci.aci_vlan_pool:
+        <<: *login_info
+        state: present
+        pool: static-vlan100s
+        pool_allocation_mode: static
+
+    - name: Assign VLAN 100-199 to Static-VLAN100s
+      cisco.aci.aci_vlan_pool_encap_block:
+        <<: *login_info
+        state: present
+        pool: static-vlan100s
+        block_name: "100-199"
+        block_start: 100
+        block_end: 199
+        pool_allocation_mode: static
+
+    # Create a Physical Domain and assign VLANs to it
+    - name: Create Physical Domain physical-domain
+      cisco.aci.aci_domain:
+        <<: *login_info
+        state: present
+        domain: physical-domain
+        domain_type: phys
+
+    - name: Assign the VLAN Pool to Physical Domain
+      cisco.aci.aci_domain_to_vlan_pool:
+        <<: *login_info
+        state: present
+        domain: physical-domain
+        pool: static-vlan100s
+        domain_type: phys
+        pool_allocation_mode: static
+
+    # Define an Interface Group Policy that will bind domain to interface
+    - name: Create Access Entity Profile physical-domain-aaep
+      cisco.aci.aci_aep:
+        <<: *login_info
+        state: present
+        aep: physical-domain-aaep
+
+    - name: Associate the AAEP to the Physical Domain
+      cisco.aci.aci_aep_to_domain:
+        <<: *login_info
+        state: present
+        aep: physical-domain-aaep
+        domain: physical-domain
+        domain_type: phys
+
+    - name: Create Interface Policy Group with the AAEP
+      cisco.aci.aci_interface_policy_leaf_policy_group:
+        <<: *login_info
+        state: present
+        lag_type: leaf
+        policy_group: physical-domain-ipg
+        aep: physical-aaep
+
+    # Process to define the switch
+    - name: Create Leaf Switch Profile leaf-1-profile
+      cisco.aci.aci_switch_policy_leaf_profile:
+        <<: *login_info
+        state: present
+        leaf_profile: leaf-1-profile
+
+    - name: Create Leaf Switch Selector leaf-1-selector
+      cisco.aci.aci_switch_leaf_selector:
+        <<: *login_info
+        state: present
+        leaf_profile: leaf-1-profile
+        leaf: leaf-1-selector
+        leaf_node_blk: node-101
+        from: "101"
+        to: "101"
+
+    # Process to define the interface
+    - name: Create Leaf Interface Profile
+      cisco.aci.aci_interface_policy_leaf_profile:
+        <<: *login_info
+        state: present
+        leaf_interface_profile: leaf-1-int-profile
+
+    - name: Bind Leaf Interface Profile to Leaf Switch Profile
+      cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
+        <<: *login_info
+        state: present
+        interface_selector: leaf-1-int-profile
+        leaf_profile: leaf-1-profile
+
+    # NOTE: This is where the binding of vlan range is also made
+    - name: Create Access Port Selector eth1-1 in Leaf Interface Profile
+      cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+        <<: *login_info
+        state: "present"
+        access_port_selector: "eth1-1"
+        leaf_interface_profile: "leaf-1-int-profile"
+        policy_group: physical-domain-ipg
+
+    - name: Create Port Block for eth1-1 in the Access Port Selector
+      cisco.aci.aci_access_port_block_to_access_port:
+        <<: *login_info
+        state: present
+        leaf_interface_profile: "leaf-1-int-profile"
+        access_port_selector: "eth1-1"
+        leaf_port_blk: "port_1"
+        from_port: "1"
+        to_port: "1"

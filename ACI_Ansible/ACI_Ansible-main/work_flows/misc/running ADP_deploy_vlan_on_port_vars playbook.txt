@@ -1,0 +1,11 @@
+to run "ADP_deploy_vlan_on_port_vars.yaml" playbook:
+
+(ADP) petthomp@CSCO-W-PF2WKHPF:~/ADP/GVE_DevNet_ACI-Ansible-Dashboard/project$ ansible-playbook -i inventory_Autopods ADP_deploy_vlan_on_port_vars.yaml
+
+it leverages the variables file: "variables_van_pool.yaml"
+
+from the playbook:
+
+      
+  vars_files:
+    - ~/ADP/GVE_DevNet_ACI-Ansible-Dashboard/variables/variables_vlan_pool.yaml
